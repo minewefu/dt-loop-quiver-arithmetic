@@ -1,0 +1,735 @@
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{longtable}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{convention}[theorem]{Convention}
+
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\DT}{\mathrm{DT}}
+\newcommand{\wt}{\mathrm{wt}}
+\newcommand{\prim}{\mathrm{prim}}
+\newcommand{\Exp}{\operatorname{Exp}}
+\newcommand{\PLog}{\operatorname{Log}}
+\newcommand{\qbin}[2]{\begin{bmatrix}#1\\#2\end{bmatrix}_q}
+\newcommand{\vp}{v_p}
+
+\title[Arithmetic of DT invariants of loop quivers]{Arithmetic of Donaldson--Thomas invariants of loop quivers:\\ improved integrality and exact $q$-analogues}
+
+\author{Claude (Anthropic)}
+\date{July 31, 2026}
+
+\begin{document}
+
+\begin{abstract}
+Let $\DT^{(m)}_n$ denote the numerical Donaldson--Thomas (DT) invariants of the $m$-loop quiver ($m\ge 2$), and $\DT^{(m)}_n(q)$ their quantized refinements in the sense of Kontsevich--Soibelman, Efimov and Reineke. We prove the \emph{improved integrality conjecture} of Garoufalidis--Kucharski--Su\l kowski (who credit the observation to Kontsevich) for all loop quivers, in the following sharp form: for every prime $p\ge 5$ one has $\vp(\DT^{(m)}_n)\ge \vp(n)$ for all $n\ge1$, while
+$v_3(\DT^{(m)}_n)\ge v_3(n)-\varepsilon_3(m)$ and $v_2(\DT^{(m)}_n)\ge v_2(n)-\varepsilon_2(m)$,
+where $\varepsilon_3(m)=1$ iff $m\equiv 2 \pmod 3$ and $\varepsilon_2(m)=1$ iff $m\equiv 2,3\pmod 4$ (and $\varepsilon_p(m)=0$ otherwise); these bounds are attained, so the optimal integer $\gamma(m)$ with $n\mid \gamma(m)\,\DT^{(m)}_n$ for all $n$ is exactly $\gamma(m)=2^{\varepsilon_2(m)}3^{\varepsilon_3(m)}$. Via the identification of extremal BPS invariants of twist knots with loop-quiver DT invariants, this proves the improved integrality conjecture, with optimal constants, for all twist knots; the values $\gamma(m)$ reproduce every twist-knot entry tabulated by Garoufalidis--Kucharski--Su\l kowski, and for the figure-eight knot ($m=3$) the divisibility statement recovers a 2017 theorem of Basor--Conrey--Morrison, the one previously proved case of the conjecture. The proof combines Reineke's explicit formula with the Jacobsthal--Kazandzidis supercongruences, including their $p=2,3$ forms, whose sign $(-1)^{k(n-k)}$ at $p=2$ matches exactly the sign twist intrinsic to motivic DT theory.
+
+On the refined level we establish several exact $q$-identities for the cyclic-word model of the quantized invariants. Writing $P_n(q)=q^{-(m-1)\binom n2}\qbin{mn-1}{n-1}$ for the weight generating function of all cyclic words and $R_n(q)=\sum_{d\mid n}\mu(n/d)\,P_d(q^{n/d})$ for its primitive part, we prove that the derivative of the Laurent polynomial $R_n$ vanishes at \emph{every} $n$-th root of unity; equivalently, $\zeta B'(\zeta)=(m-1)\binom n2\,B(\zeta)$ for $B=\qbin{mn-1}{n-1}$ and every $\zeta^n=1$. Combined with the divisibility $[n]_q\mid \bar Q_n(q)$ this yields the $q$-supercongruence $R_n(q)\equiv 0 \pmod{\Phi_p(q)^2}$ for every odd prime $p\mid n$, with an explicitly computed defect at $p=2$. We further prove an exact plethystic (necklace) formula
+$\bar Q_n = [t^n]\PLog\, A(q,t) + \delta_{m,n}\,\psi_2\big([t^{n/2}]\PLog\,A(q,t)\big)$
+expressing the quantized DT invariants through the ballot-sequence (co-area $q$-Fuss--Catalan) series $A(q,t)$, sharpening Reineke's congruence modulo $q^n-1$ to an identity. All results are verified by two structurally independent computer implementations (a first-principles cohomological-Hall-algebra engine and a direct cyclic-word enumeration), for $m\le 6$ (up to $n=50$ for $m=2$), and the arithmetic theorem for $m\le 10$, $n\le 120$.
+\end{abstract}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+\subsection{Background}
+For a symmetric quiver $Q$, Kontsevich and Soibelman \cite{KS} defined motivic (quantized, refined) Donaldson--Thomas invariants $\Omega_\gamma(q)$ through the factorization of the generating series of the cohomological Hall algebra (CoHA). Efimov \cite{Efimov}, proving a conjecture of \cite{KS}, showed that the CoHA of a symmetric quiver is a free supercommutative algebra, whence the invariants are polynomials with \emph{nonnegative} integer coefficients; Meinhardt--Reineke \cite{MR} identified them with intersection Betti numbers of moduli spaces and proved the integrality conjecture in general.
+
+The most fundamental examples are the $m$-loop quivers $Q_m$ (one vertex, $m$ loops). For these, Reineke \cite{Rei0903, Rei1102} developed a complete combinatorial model. Following the conventions of \cite{Rei1102} (see Section \ref{sec:conventions}), let
+\begin{equation}\label{eq:H}
+H(q,t)\;=\;\sum_{n\ge 0}\frac{q^{(m-1)\binom n2}}{(1-q^{-1})(1-q^{-2})\cdots(1-q^{-n})}\,t^n ,
+\end{equation}
+and define the quantized DT invariants $\DT^{(m)}_n(q)$ by the product expansion
+\begin{equation}\label{eq:proddef}
+H\big(q,(-1)^{m-1}t\big)\;=\;\prod_{n\ge1}\prod_{k\ge0}\prod_{l\ge 0}\big(1-q^{k-l}t^n\big)^{-(-1)^{(m-1)n}c_{n,k}},
+\qquad \DT^{(m)}_n(q)=\sum_{k\ge0}c_{n,k}q^k .
+\end{equation}
+By \cite{KS,Efimov,Rei1102} the $\DT^{(m)}_n(q)$ are monic polynomials of degree $(m-1)\binom n2$ with nonnegative coefficients, divisible by $q^{n-1}$. The numerical invariants $\DT^{(m)}_n:=\DT^{(m)}_n(1)\in\NN$ admit the closed formula \cite[Thm.~3.2]{Rei1102} (see also \cite[Ex.~2.4]{ReiSurvey}):
+\begin{equation}\label{eq:reineke}
+\DT^{(m)}_n \;=\; \frac{1}{n^2}\sum_{d\mid n}\mu\Big(\frac nd\Big)\,(-1)^{(m-1)(n-d)}\binom{md-1}{d-1}.
+\end{equation}
+That the right-hand side of \eqref{eq:reineke} is an integer at all is a nontrivial theorem \cite{Rei0903}; it is the numerical shadow of the Kontsevich--Soibelman integrality.
+
+\subsection{Improved integrality}
+In 2015, Garoufalidis, Kucharski and Su\l kowski \cite{GKS}, studying extremal BPS (LMOV) invariants $b^{\pm}_r$ of knots, discovered experimentally --- crediting the observation to Kontsevich (private communication; for algebraic curves satisfying the K2 condition) --- the following \emph{Improved Integrality}:
+
+\begin{conjecture}[{\cite[Conj.~1.3]{GKS}}]\label{conj:GKS}
+For every knot there exist nonzero integers $\gamma^{\pm}$ such that
+$\dfrac{\gamma^{\pm}\, b^{\pm}_r}{r}\in\ZZ$ for all $r\ge1$.
+\end{conjecture}
+
+\noindent(This is the form verified in \cite[Table~2]{GKS}, which lists $2b^-_r/r\in\ZZ$ for the figure-eight knot.)
+
+By \cite[Prop.~1.2]{GKS}, for twist knots $K_p$ the extremal BPS invariants are exactly (up to sign) the numbers \eqref{eq:reineke}: for $p\le -1$,
+\[
+b^-_{K_p,r}=-\frac1{r^2}\sum_{d\mid r}\mu\Big(\frac rd\Big)\binom{3d-1}{d-1},\qquad
+b^+_{K_p,r}=\frac1{r^2}\sum_{d\mid r}\mu\Big(\frac rd\Big)\binom{(2|p|+1)d-1}{d-1},
+\]
+i.e.\ $\pm\DT^{(3)}_r$ and $\pm\DT^{(2|p|+1)}_r$; and for $p\ge2$ the analogous formulas with the signs $(-1)^{d+1},(-1)^d$ identify $b^{\mp}_{K_p,r}$ with $\pm\DT^{(2)}_r$ and $\pm\DT^{(2p+2)}_r$. (For genuine $(2,2p+1)$ torus knots the situation is different: there the extremal invariants are Bizley-type lattice-path counts attached to multi-vertex quivers \cite{PSS}, and the constants observed in \cite[Table~1]{GKS} grow linearly in $p$; Conjecture \ref{conj:GKS} for those families is not addressed here.)
+
+The integrality $b_r^\pm\in\ZZ$ (LMOV) is Reineke's theorem in this language. For the improved divisibility by $r$, one case has been proved: Basor, Conrey and Morrison \cite{BCM} showed in 2017, by a direct arithmetic analysis of the M\"obius sums (via binary digit counting), that the figure-eight invariants $n_r=\DT^{(3)}_r$ satisfy $2n_r/r\in\ZZ$ for all $r$ --- explicitly as an instance of Conjecture \ref{conj:GKS}, with $\gamma=2$ --- together with an exact characterization of the $r$ with $n_r/r\in\ZZ$. For all other $m$ the problem has remained open; the subsequent integrality literature (e.g.\ \cite{LuoZhu, WangZhu}) proves only plain integrality, and M\"uller \cite{Muller}, who established mod $p^{3r}$ Wolstenholme-type congruences for framings of \emph{rational} 2-functions \cite{SVW}, explicitly notes that the (algebraic) twist-knot case lies outside his hypotheses.
+
+Our first main result resolves the loop-quiver case for every $m$, in optimal form.
+
+\begin{theorem}[Improved integrality for loop quivers, sharp form]\label{thm:main}
+Let $m\ge2$ and let $\DT_n=\DT^{(m)}_n$ be defined by \eqref{eq:proddef}. Define
+\[
+\varepsilon_2(m)=\begin{cases}1,& m\equiv 2,3 \pmod 4,\\ 0,& m\equiv 0,1\pmod 4,\end{cases}
+\qquad
+\varepsilon_3(m)=\begin{cases}1,& m\equiv 2\pmod 3,\\ 0,& m\equiv 0,1 \pmod 3.\end{cases}
+\]
+Then for all $n\ge 1$:
+\begin{enumerate}
+\item $\vp(\DT_n)\ \ge\ \vp(n)$ for every prime $p\ge5$;
+\item $v_3(\DT_n)\ \ge\ v_3(n)-\varepsilon_3(m)$;
+\item $v_2(\DT_n)\ \ge\ v_2(n)-\varepsilon_2(m)$.
+\end{enumerate}
+Consequently $n \mid \gamma(m)\DT_n$ for all $n$, with $\gamma(m)=2^{\varepsilon_2(m)}3^{\varepsilon_3(m)}$. Moreover $\gamma(m)$ is optimal: if $\varepsilon_2(m)=1$ then $v_2(\DT_2)=0$, and if $\varepsilon_3(m)=1$ then $v_3(\DT_3)=0$.
+\end{theorem}
+
+\begin{corollary}\label{cor:knots}
+Conjecture \ref{conj:GKS} holds for the extremal BPS invariants of all twist knots $K_p$, with the explicit optimal constants $\gamma^{\pm}=\gamma(m)$ for the corresponding $m\in\{3,\,2|p|+1\}$ resp.\ $\{2,\,2p+2\}$. The resulting values reproduce every twist-knot entry of \cite[Table~1]{GKS} (the twelve tabulated values, which depend only on $p\bmod 6$); for the figure-eight knot ($m=3$ for both rows) one gets $\gamma^\pm=2$, recovering the theorem of Basor--Conrey--Morrison \cite{BCM}.
+\end{corollary}
+
+\begin{remark}
+For $m=3$ and $p=2$ the analysis of \cite{BCM} is finer than Theorem \ref{thm:main} in one direction: they determine exactly for which $r$ the stronger divisibility $r\mid \DT^{(3)}_r$ holds (via a binary ``well-spaced'' criterion), whereas our uniform bound only gives $v_2(\DT^{(3)}_r)\ge v_2(r)-1$ with sharpness at $r=2$. Extending such exact per-$n$ characterizations to all $m$ is an interesting problem.
+\end{remark}
+
+The proof of Theorem \ref{thm:main} rests on the Jacobsthal--Kazandzidis supercongruences \cite{Kaz, RobertZuber, Mestrovic}, including their less known $p=3$ and (signed) $p=2$ forms. Two structural coincidences deserve emphasis. First, the passage from binomials $\binom{md}{d}$ to $\binom{md-1}{d-1}=\frac1m\binom{md}{d}$ costs exactly $\vp(m)$, which is repaid by the factor $\vp(nk(n-k))\ni \vp(m)$ in the Kazandzidis modulus --- this is why the theorem is uniform in $m$, including $p\mid m$. Second, at $p=2$ the Kazandzidis congruence acquires the sign $(-1)^{k(n-k)}$; with $n=me,k=e$ this sign is $(-1)^{(m-1)e}$, which is \emph{exactly} the sign twist $(-1)^{(m-1)d}$ intrinsic to the motivic DT normalization \eqref{eq:proddef}. The signs dictated by DT theory are precisely those making the $2$-adic congruences work.
+
+We also record the tower (supercongruence) form: the sequence $a_e=(-1)^{(m-1)(e-1)}\binom{me-1}{e-1}$ satisfies, for all $u,k\ge1$,
+\begin{equation}\label{eq:tower}
+a_{p^k u}\ \equiv\ a_{p^{k-1}u} \pmod {p^{3k+\vp(m(m-1))}}\quad (p\ge5),
+\end{equation}
+with moduli $3^{3k-1+v_3(m(m-1))}$ and $2^{3k-2+v_2(m(m-1))}$ at $p=3,2$. In the terminology of Almkvist--Zudilin \cite{AZ} and Schwarz--Vologodsky--Walcher \cite{SVW}, the loop-quiver sequences are \emph{$3$-sequences away from $\{2,3\}$}; this answers, for the loop-quiver/twist-knot family, the question left open by M\"uller \cite{Muller}.
+
+\subsection{Exact $q$-analogues}
+Our second group of results concerns the quantized invariants themselves. Reineke \cite[\S6]{Rei1102} encodes $\DT^{(m)}_n(q)$ by cyclic words: let
+\[
+U_n=\Big\{a=(a_1,\dots,a_n)\in\NN^n:\ \textstyle\sum_i a_i=(m-1)n\Big\},\qquad
+\wt(a)=\sum_{i=1}^n (n-i)\big(m-1-a_i\big),
+\]
+with the cyclic group $C_n$ acting by rotation $\rho$; $\wt$ descends to a well-defined maximum $\wt(C)$ on each orbit $C$. Let $U^{\prim}_n$ be the primitive (free-orbit) elements, and let $U^{\prim,+}_n/C_n$ be the set of primitive orbits, enlarged --- only when $m$ is even and $n\equiv2\pmod4$ --- by the doubles $b\cdot b$ of primitive $b\in U_{n/2}$ (\cite[\S5--6]{Rei1102}). Then
+\begin{equation}\label{eq:DTword}
+\DT^{(m)}_n(q)\;=\;q^{\,n-1}\,\frac{\bar Q_n(q)}{[n]_q},\qquad
+\bar Q_n(q)\;=\;\sum_{C\in U^{\prim,+}_n/C_n}q^{\wt(C)},\qquad [n]_q=1+q+\dots+q^{n-1},
+\end{equation}
+where $[n]_q\mid\bar Q_n$ \cite[Thm.~6.7]{Rei1102}; see Remark \ref{rem:erratum} on the prefactor.
+
+Our results flow from three elementary identities for the weight statistic (Section \ref{sec:lemmas}): the rotation formula $\wt(\rho a)=\wt(a)+n(a_1-(m-1))$ and the repetition formula $\wt(b^{(r)})=r\,\wt(b)$, which are essentially in \cite[Lem.~6.5]{Rei1102} and which we reprove for completeness, and the apparently unnoticed \emph{orbit-sum identity}
+\[
+\sum_{k=0}^{n-1}\wt(\rho^k a)\;=\;0\qquad\text{for every } a\in U_n .
+\]
+
+Let $P_n(q)=\sum_{a\in U_n}q^{\wt(a)}$ and $R_n(q)=\sum_{a\in U^{\prim}_n}q^{\wt(a)}$ (Laurent polynomials). Then (Section \ref{sec:exact}):
+
+\begin{theorem}\label{thm:q}
+For all $m\ge2$, $n\ge1$:
+\begin{enumerate}
+\item (Gaussian binomial form) $P_n(q)=q^{-(m-1)\binom n2}\,\qbin{mn-1}{n-1}$, and
+$R_n(q)=\sum_{d\mid n}\mu(n/d)\,P_d\big(q^{n/d}\big)$.
+\item (Root-of-unity collapse) For every $\zeta$ with $\zeta^n=1$: $R_n(\zeta)=n\sum_{C\in U^{\prim}_n/C_n}\zeta^{\wt(C)}$.
+\item (Derivative theorem) The derivatives of the Laurent polynomials $P_n$ and $R_n$ vanish at every $n$-th root of unity. Equivalently, for $B=\qbin{mn-1}{n-1}$ and every $\zeta^n=1$,
+\[
+\zeta\,B'(\zeta)\;=\;(m-1)\tbinom n2\,B(\zeta).
+\]
+\item ($q$-supercongruence) For every \emph{odd} prime $p\mid n$,
+\[
+R_n(q)\;\equiv\;0\ \ \pmod{\Phi_p(q)^2}
+\]
+in the localization $\ZZ[q^{\pm1}]$, $\Phi_p$ the $p$-th cyclotomic polynomial. For $p=2\mid n$: if $m$ is odd or $n\equiv0\pmod4$ then $R_n\equiv0\pmod{\Phi_2^2}$, while if $m$ is even and $n\equiv2\pmod 4$ then $R_n(-1)=-n\,\bar Q^{\prim}_{n/2}(1)$ and $R_n'(-1)=0$.
+\end{enumerate}
+\end{theorem}
+
+\noindent(Parts (1)--(4) are proved below as Propositions \ref{prop:P}, \ref{prop:R} and Theorems \ref{thm:deriv}, \ref{thm:qsuper}.)
+
+Part (4) is, to our knowledge, the first $q$-supercongruence statement attached to Donaldson--Thomas invariants of any flavor. Note that $R_n(1)=n\,\bar Q^{\prim}_n(1)$, which equals $n^2\DT_n$ when $m$ is odd or $n\not\equiv2\pmod4$ (and $n^2\DT_n-n\bar Q^{\prim}_{n/2}(1)$ otherwise); thus Theorem \ref{thm:q}(4) is a genuine $q$-lift of the divisibility $n^2\mid R_n(1)$, while Theorem \ref{thm:main} measures the deeper $p$-adic layers at $q=1$.
+
+Finally we sharpen Reineke's congruence $\bar Q_n\equiv\frac1n\sum_{d\mid n}\mu(n/d)P_d(q^{n/d}) \pmod{q^n-1}$ to an exact plethystic formula. Call $a\in U_n$ \emph{admissible} if $\sum_{j\le i}a_j\le(m-1)i$ for all $i$, and let $A_n(q)=\sum_{a \text{ admissible}}q^{\wt(a)}$, $A(q,t)=1+\sum_{n\ge1}A_n(q)t^n$; here $A_n(1)=\frac1{(m-1)n+1}\binom{mn}n$ is the Fuss--Catalan number and $A_n$ is a (co-area) $q$-Fuss--Catalan polynomial. Let $\Exp$/$\PLog$ denote the plethystic exponential/logarithm for the operations $\psi_r(q)=q^r$, $\psi_r(t)=t^r$.
+
+\begin{theorem}[Exact necklace formula]\label{thm:master}
+For all $m\ge2$, $n\ge1$,
+\[
+\bar Q_n(q)\;=\;[t^n]\,\PLog\,A(q,t)\;+\;
+\begin{cases}
+\psi_2\Big([t^{n/2}]\,\PLog\,A(q,t)\Big), & m \text{ even and } n\equiv2\!\!\pmod 4,\\[1mm]
+0,&\text{otherwise.}
+\end{cases}
+\]
+Equivalently, $A(q,t)=\Exp\big(\sum_{n\ge1}\bar Q^{\prim}_n(q)\,t^n\big)$ where $\bar Q^{\prim}_n$ is the primitive-orbit part of $\bar Q_n$.
+\end{theorem}
+
+Combined with \eqref{eq:DTword} this gives a closed recursive determination of all $\DT^{(m)}_n(q)$ from ballot-path polynomials, and explains structurally why the arithmetic of quantized DT invariants is governed by ($q$-)Fuss--Catalan combinatorics.
+
+\subsection{Phenomenology modulo $\Phi_p$, and conjectures}
+Section \ref{sec:pheno} reports exact computations of $\DT^{(m)}_n(q)$ mod $\Phi_p(q)$ over large ranges. The normalized values $V_n:=q^{1-n}\DT_n(q)\bmod \Phi_p$ display striking regularities --- e.g.\ for $m=2$, $p=5$ the rows $n\equiv2,3,4 \pmod 5$ recur with integer multiplier sequences $(1,1,3,9,\dots)$, $(1,2,6,17,\dots)$, and the rows $n\equiv1\pmod5$ vanish except when $n\equiv6\pmod{20}$, where the doubling classes contribute --- which we record as data and conjecture to be governed by the algebraicity of $A(\zeta_p,t)$ (Proposition \ref{prop:algebraic}). These finer questions are the natural $q$-analogues of the Jacobsthal layer and are left open, echoing the open problem of Straub \cite[Rem.~6]{Straub} on a $q$-Jacobsthal congruence.
+
+\subsection{Verification}
+All statements have been verified by two independent implementations: a first-principles CoHA/plethystic engine computing $\DT^{(m)}_n(q)$ from \eqref{eq:proddef} (for $m=2$ up to $n=50$; $m=3$: $36$; $m=4$: $27$; $m=5$: $22$; $m=6$: $14$), and a clean-room enumeration of the cyclic-word model \eqref{eq:DTword}. The two agree on all overlapping ranges, and match the published tables of \cite{Rei1102,KRSS}. Theorem \ref{thm:main} was additionally checked directly from \eqref{eq:reineke} for all $m\le 10$, $n\le 120$, and the tower congruences \eqref{eq:tower} on wide ranges. Section \ref{sec:verify} gives details.
+
+\subsection*{Related work}
+Apart from the figure-eight case treated by Basor--Conrey--Morrison \cite{BCM} (discussed above), arithmetic divisibility properties of DT-type invariants appear not to have been studied; the nearest circles of ideas are the $2$-function literature \cite{KSV,SVW,Muller}, congruence skein relations \cite{CLPZ}, and the Habiro-ring arithmetic of Kontsevich--Soibelman series \cite{GSWZ}. On the number-theoretic side our tools come from the Wolstenholme--Ljunggren--Jacobsthal--Kazandzidis tradition \cite{Mestrovic,RobertZuber} and, for the $q$-story, we place our derivative theorem alongside the $q$-congruence results of Andrews, Clark, Straub, Pan, Zudilin and Gorodetsky \cite{Andrews,Clark,Straub,StraubApery,Pan,Zudilin,Gorodetsky}, and the necklace-model Gauss-congruence framework of Gossow \cite{Gossow}. Theorem \ref{thm:q}(3) appears to be new even as a statement about Gaussian binomial coefficients, though we note that Gorodetsky's root-of-unity derivative evaluations \cite[Cor.~8.2]{Gorodetsky} provide an alternative route to such statements.
+
+\subsection*{Acknowledgments} The results in this paper were found and proved with essential help from computer experimentation; the search strategy, proofs and text are due to the author. Complete source code for all computations accompanies the paper.
+
+\section{Conventions and background}\label{sec:conventions}
+
+\begin{convention}\label{conv:DT}
+Throughout, $m\ge2$ is fixed and $Q_m$ is the quiver with one vertex and $m$ loops, with Euler form $\chi(a,b)=(1-m)ab$. We use Reineke's normalization \eqref{eq:H}--\eqref{eq:proddef} for $\DT^{(m)}_n(q)$. The dictionary to other conventions is: Efimov's invariants \cite[\S4]{Efimov} are obtained by $q\mapsto q^{-1}$ and rescaling $t\mapsto (-1)^{m-1}q^{(1-m)/2}t$; the Kontsevich--Soibelman invariants $\Omega_n(q^{1/2})$ of \cite[\S2.5]{KS} satisfy $\Omega_n(q)=q^{-(m-1)n/2}\DT^{(m)}_n(q^{-1})$ up to the global sign $(-1)^{(m-1)n}$. Under either dictionary, Efimov's theorem \cite{Efimov} states: $\DT^{(m)}_n(q)\in\NN[q]$ is monic of degree $(m-1)\binom n2$ and divisible by $q^{n-1}$. All our computations confirm this normalization (Section \ref{sec:verify}).
+\end{convention}
+
+\begin{remark}[Erratum in {\cite[Thm.~6.8]{Rei1102}}]\label{rem:erratum}
+Theorem 6.8 of \cite{Rei1102} is printed with the prefactor $q^{1-n}$, i.e.\ $\DT_n(q)=q^{1-n}\bar Q_n(q)/[n]_q$; the same form is quoted in \cite[eq.~(B.4)]{KuchSulk}. This is inconsistent with the paper's own Definition (via \eqref{eq:proddef}) and with the degree/divisibility constraints of \cite[Cor.~4.2]{Efimov}: comparing the $\Exp$-forms termwise gives $\frac{\DT_n(q)}{1-q^{-1}}=\frac{\bar Q_n(q)}{1-q^{-n}}$, i.e.\ the correct prefactor is $q^{n-1}$ as in \eqref{eq:DTword}. (For example, $m=2$, $n=2$: $\bar Q_2=1+q$ --- the primitive class $\{(2,0),(0,2)\}$ contributes $q$ and the doubling class $(1,1)$ contributes $1$ --- and $q^{n-1}\bar Q_2/[2]_q= q$ matches $\DT^{(2)}_2(q)=q$, whereas $q^{1-n}$ gives $q^{-1}\notin\NN[q]$.) We verified \eqref{eq:DTword} independently by symbolic expansion of \eqref{eq:proddef} through $t^{12}$ for $m=2$ and $t^9$ for $m=3$ and by the CoHA engine on the full ranges above. At $q=1$ the two versions agree, so no numerical statement in \cite{Rei1102} is affected.
+\end{remark}
+
+We will use the M\"obius function $\mu$, the $q$-integer $[n]_q$, the Gaussian binomials $\qbin nk\in\NN[q]$, and the cyclotomic polynomials $\Phi_d(q)$, with $q^n-1=\prod_{d\mid n}\Phi_d(q)$ and $[n]_q=\prod_{1\ne d\mid n}\Phi_d(q)$. Recall that $\qbin{a+b}{b}$ is the generating polynomial of partitions in a $b\times a$ box.
+
+Our arithmetic input is the following classical family of supercongruences. For the history --- Babbage, Wolstenholme, Glaisher, Ljunggren, Jacobsthal --- we refer to Me\v strovi\'c's survey \cite{Mestrovic}.
+
+\begin{theorem}[Kazandzidis \cite{Kaz}; Robert--Zuber \cite{RobertZuber}]\label{thm:kaz}
+Let $n\ge k\ge 1$. Then
+\[
+\binom{pn}{pk}\ \equiv\ \binom nk \pmod{p^3\,nk(n-k)\binom nk\ZZ_p}\qquad(p\ge5),
+\]
+\[
+\binom{3n}{3k}\ \equiv\ \binom nk \pmod{3^2\,nk(n-k)\binom nk\ZZ_3}.
+\]
+\end{theorem}
+
+These two statements are exactly as printed in \cite{RobertZuber}, which gives a short proof via the $p$-adic Morita gamma function (see also \cite[VII.1.6]{RobertBook}). At the prime $2$ the analogous congruence acquires a sign; since we could not locate an accessible published proof of this case (Kazandzidis's original articles \cite{Kaz} are hard to obtain), we give a complete elementary proof in Appendix~\ref{app:p2}.
+
+\begin{proposition}[Signed Kazandzidis congruence at $p=2$]\label{prop:kaz2}
+For all $n\ge k\ge 1$,
+\[
+\binom{2n}{2k}\ \equiv\ (-1)^{k(n-k)}\binom nk \pmod{2\,nk(n-k)\binom nk\ZZ_2}.
+\]
+\end{proposition}
+
+(We verified Theorem \ref{thm:kaz} computationally for all $2\le n\le 40$ and Proposition \ref{prop:kaz2} for all $2\le n\le 300$, $1\le k<n$; the constants $3,2,1$ are sharp, e.g.\ the $p=2$ congruence is exact at $(n,k)=(2,1)$: $\binom42-(-1)\binom21=8$.)
+
+\section{The weight statistic: three lemmas}\label{sec:lemmas}
+
+Recall $U_n=\{a\in\NN^n:\sum_i a_i=(m-1)n\}$, $\wt(a)=\sum_{i=1}^n(n-i)(m-1-a_i)$, the rotation $\rho(a)=(a_2,\dots,a_n,a_1)$, and the partial sums $S_k(a)=a_1+\dots+a_k$ ($S_0=0$). Note the two elementary normalizations
+\begin{equation}\label{eq:wtnorm}
+\sum_{i=1}^n (m-1-a_i)=0,
+\qquad
+\wt(a)= (m-1)\tbinom n2-\sum_{i=1}^n(n-i)a_i .
+\end{equation}
+
+\begin{lemma}[Rotation]\label{lem:rot}
+For every $a\in U_n$: $\wt(\rho a)=\wt(a)+n\big(a_1-(m-1)\big)$. Consequently
+\[
+\wt(\rho^k a)\;=\;\wt(a)+n\big(S_k(a)-(m-1)k\big)\qquad(0\le k\le n),
+\]
+and $\wt$ is constant modulo $n$ on each $C_n$-orbit.
+\end{lemma}
+
+\begin{proof}
+Since $(\rho a)_i=a_{i+1}$ for $i<n$ and $(\rho a)_n=a_1$ (whose weight-coefficient is $n-n=0$),
+\[
+\wt(\rho a)=\sum_{j=2}^{n}(n-j+1)(m-1-a_j)
+=\sum_{j=2}^n (n-j)(m-1-a_j)+\sum_{j=2}^n(m-1-a_j).
+\]
+The first sum is $\wt(a)-(n-1)(m-1-a_1)$; by \eqref{eq:wtnorm} the second is $-(m-1-a_1)$. Adding gives $\wt(a)-n(m-1-a_1)$. The iterated form follows by induction, and $\wt(\rho^k a)\equiv\wt(a)\pmod n$.
+\end{proof}
+
+\begin{lemma}[Repetition]\label{lem:rep}
+Let $b\in U_d$ and let $b^{(r)}\in U_{rd}$ be its $r$-fold concatenation. Then $\wt_{rd}(b^{(r)})=r\,\wt_d(b)$.
+\end{lemma}
+
+\begin{proof}
+Write $n=rd$. Then
+\[
+\wt_n(b^{(r)})=\sum_{t=0}^{r-1}\sum_{j=1}^{d}\big(n-td-j\big)(m-1-b_j)
+=\sum_{t=0}^{r-1}\Big[\sum_{j=1}^d (d-j)(m-1-b_j)+(n-td-d)\sum_{j=1}^d(m-1-b_j)\Big],
+\]
+and the inner second sum vanishes by \eqref{eq:wtnorm} applied to $b\in U_d$; each bracket equals $\wt_d(b)$.
+\end{proof}
+
+\begin{lemma}[Orbit-sum identity]\label{lem:orbit}
+For every $a\in U_n$:\quad $\displaystyle\sum_{k=0}^{n-1}\wt(\rho^k a)=0$.
+\end{lemma}
+
+\begin{proof}
+By Lemma \ref{lem:rot}, the sum equals $n\,\wt(a)+n\big(\sum_{k=1}^{n-1}S_k(a)-(m-1)\binom n2\big)$. Now
+\[
+\sum_{k=1}^{n-1}S_k(a)=\sum_{i=1}^n a_i\,\#\{k: i\le k\le n-1\}=\sum_{i=1}^n(n-i)a_i
+\overset{\eqref{eq:wtnorm}}{=}(m-1)\tbinom n2-\wt(a),
+\]
+so the total is $n\,\wt(a)+n\big[(m-1)\binom n2 -\wt(a)-(m-1)\binom n2\big]=0$.
+\end{proof}
+
+If $a$ has period $d\mid n$ (i.e.\ $\rho^d a=a$), then $\sum_{k=0}^{n-1}\wt(\rho^ka)=\frac nd\sum_{k=0}^{d-1}\wt(\rho^ka)$, so \emph{the orbit-sum of $\wt$ over each $C_n$-orbit (of any period) vanishes}.
+
+Finally, call $a\in U_n$ \emph{admissible} if $S_k(a)\le(m-1)k$ for all $0\le k\le n$. By Lemma \ref{lem:rot}, $\wt(\rho^ka)\le \wt(a)$ for all $k$ iff $a$ is admissible; since orbits are finite, every orbit contains an admissible element, and the admissible elements of an orbit are exactly the rotations attaining the maximal weight $\wt(C)$ (this is Lemma 6.5 of \cite{Rei1102}, which we have just reproved).
+
+\section{Exact identities and the derivative theorem}\label{sec:exact}
+
+\begin{proposition}\label{prop:P}
+$P_n(q):=\sum_{a\in U_n}q^{\wt(a)}=q^{-(m-1)\binom n2}\,\qbin{mn-1}{n-1}$, a symmetric ($q\leftrightarrow q^{-1}$--invariant) Laurent polynomial supported in $[-(m-1)\binom n2,(m-1)\binom n2]$.
+\end{proposition}
+
+\begin{proof}
+By \eqref{eq:wtnorm}, $P_n(q)=q^{(m-1)\binom n2}\sum_a q^{-\sum_i(n-i)a_i}$, the sum over compositions of $N:=(m-1)n$ into $n$ parts $a_1,\dots,a_n\ge0$ with part $a_i$ weighted $(n-i)a_i$. Mapping $a$ to the partition with $a_i$ parts of size $n-i$ gives a bijection onto partitions with at most $N$ parts, each of size $\le n-1$ --- i.e.\ partitions in an $N\times(n-1)$ box --- transforming the statistic into the partition size. Hence $\sum_a x^{\sum(n-i)a_i}=\qbin{N+n-1}{n-1}\big|_{q=x}$, and with $N+n-1=mn-1$,
+\[
+P_n(q)=q^{(m-1)\binom n2}\ \qbin{mn-1}{n-1}\Big|_{q\mapsto q^{-1}}
+=q^{(m-1)\binom n2-\deg}\qbin{mn-1}{n-1}
+\]
+using the palindromicity of Gaussian binomials, where $\deg=\big(mn-1-(n-1)\big)(n-1)=2(m-1)\binom n2$.
+\end{proof}
+
+\begin{proposition}\label{prop:R}
+Let $R_n(q):=\sum_{a\in U^{\prim}_n}q^{\wt(a)}$. Then:
+\begin{enumerate}
+\item $R_n(q)=\sum_{d\mid n}\mu(n/d)\,P_d(q^{n/d})$.
+\item For every $\zeta\in\CC$ with $\zeta^n=1$:\quad $P_n(\zeta)=\sum_{d\mid n} d\!\!\sum_{C\in U_d^{\prim}/C_d}\!\!\zeta^{\frac nd \wt(C)}$ \quad and\quad $R_n(\zeta)=n\!\!\sum_{C\in U^{\prim}_n/C_n}\!\!\zeta^{\wt(C)}$,
+where $\zeta^{\wt(C)}$ is well defined by Lemma \ref{lem:rot}.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(1) Every $a\in U_n$ of exact period $d$ is uniquely $b^{(n/d)}$ with $b\in U^{\prim}_d$, and $\wt(a)=\frac nd\wt_d(b)$ by Lemma \ref{lem:rep}. Hence $P_n(q)=\sum_{d\mid n}R_d(q^{n/d})$, and M\"obius inversion (in the Dirichlet sense, using $\psi_{r}\psi_{s}=\psi_{rs}$ for the substitutions $q\mapsto q^r$) gives (1).
+(2) Group $U^{\prim}_n$ into orbits: each orbit has $n$ elements whose weights differ by multiples of $n$ (Lemma \ref{lem:rot}), so all contribute $\zeta^{\wt(C)}$; this gives the formula for $R_n(\zeta)$, and the one for $P_n(\zeta)$ follows from the period decomposition together with Lemma \ref{lem:rep}.
+\end{proof}
+
+\begin{theorem}[Derivative theorem]\label{thm:deriv}
+For every $n\ge1$ and every $\zeta\in\CC$ with $\zeta^n=1$,
+\[
+P_n'(\zeta)=0
+\qquad\text{and}\qquad
+R_n'(\zeta)=0 ,
+\]
+where $'$ denotes $\frac{d}{dq}$ of Laurent polynomials. Equivalently, with $B=\qbin{mn-1}{n-1}$ and $s=(m-1)\binom n2$:
+\[
+\zeta\,B'(\zeta)= s\,B(\zeta)\qquad\text{for every }\zeta^n=1 .
+\]
+\end{theorem}
+
+\begin{proof}
+Fix $\zeta$ with $\zeta^n=1$. Group the sum $R_n'(q)=\sum_{a\in U^{\prim}_n}\wt(a)\,q^{\wt(a)-1}$ into $C_n$-orbits. On an orbit $C$ with representative $a$, all exponents $\wt(\rho^ka)-1$ are congruent mod $n$ (Lemma \ref{lem:rot}), so
+\[
+\sum_{k=0}^{n-1}\wt(\rho^ka)\,\zeta^{\wt(\rho^ka)-1}=\zeta^{\wt(C)-1}\sum_{k=0}^{n-1}\wt(\rho^ka)=0
+\]
+by Lemma \ref{lem:orbit}. Summing over orbits gives $R_n'(\zeta)=0$. For $P_n$, orbits of period $d\mid n$ contribute $\zeta^{\wt(C)-1}\sum_{k=0}^{d-1}\wt(\rho^ka)$, which vanishes by the remark after Lemma \ref{lem:orbit}. Finally $P_n=q^{-s}B$ gives $P_n'=q^{-s-1}(qB'-sB)$, so $P_n'(\zeta)=0$ is equivalent to $\zeta B'(\zeta)=sB(\zeta)$.
+\end{proof}
+
+\begin{remark}
+At $\zeta=1$ the identity $B'(1)=sB(1)$ is the palindromy of $B$ (the mean of the size statistic over the $N\times(n-1)$ box is $s$); at the other $n$-th roots of unity the statement appears to be new. It is a genuinely different family from the evaluations $\omega\, \frac{d}{dq}\qbin{an}{bn}(\omega)$ computed by Gorodetsky \cite[Thm.~2.6]{Gorodetsky}, which are in general nonzero. Note also that Theorem \ref{thm:deriv} may be restated as: $(q^n-1)\mid \big(q\hat R_n'(q)-\sigma \hat R_n(q)\big)$ in $\ZZ[q]$, where $\hat R_n=q^{\sigma}R_n$ is the polynomial normalization; this is the form in which it was machine-verified on large ranges.
+\end{remark}
+
+\begin{theorem}[$q$-supercongruences for the primitive part]\label{thm:qsuper}
+Let $p\mid n$ be prime.
+\begin{enumerate}
+\item If $p$ is odd, then $\Phi_p(q)^2$ divides $R_n(q)$ in $\ZZ[q^{\pm1}]$.
+\item If $p=2$: when $m$ is odd or $4\mid n$, $\Phi_2(q)^2=(q+1)^2$ divides $R_n(q)$; when $m$ is even and $n\equiv2\pmod 4$,
+\[
+R_n(-1)=-\,n\,\bar Q^{\prim}_{n/2}(1),\qquad R_n'(-1)=0 .
+\]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+By Theorem \ref{thm:deriv}, $R_n'$ vanishes at every primitive $p$-th root of unity $\zeta_p$ (these satisfy $\zeta_p^n=1$ since $p\mid n$). It remains to evaluate $R_n(\zeta_p)$. By Proposition \ref{prop:R}(2), $R_n(\zeta_p)=n\sum_C\zeta_p^{\wt(C)}$ over primitive orbits. By \eqref{eq:DTword} and $[n]_q\mid\bar Q_n$ \cite[Thm.~6.7]{Rei1102}, and since $\Phi_p\mid[n]_q$, we get $\bar Q_n(\zeta_p)=0$. If $m$ is odd or $n\not\equiv2\pmod4$ then $\bar Q_n=\bar Q^{\prim}_n=\sum_C q^{\wt(C)}$, whence $R_n(\zeta_p)=n\bar Q_n(\zeta_p)=0$; double vanishing gives $\Phi_p^2\mid R_n$. If $m$ is even and $n\equiv 2\pmod 4$ then $\bar Q_n=\bar Q^{\prim}_n+\psi_2(\bar Q^{\prim}_{n/2})$ (Theorem \ref{thm:master}, or \cite[Thm.~5.11]{Rei1102} with Lemma \ref{lem:rep}), so
+\[
+R_n(\zeta_p)=n\bar Q^{\prim}_n(\zeta_p)=n\big(\bar Q_n(\zeta_p)-\bar Q^{\prim}_{n/2}(\zeta_p^2)\big)=-\,n\,\bar Q^{\prim}_{n/2}(\zeta_p^2).
+\]
+For odd $p$, $\zeta_p^2$ is again a primitive $p$-th root of unity and $p\mid \frac n2$; the same argument one level down (note $\frac n2$ is odd, so no further doubling) gives $\bar Q^{\prim}_{n/2}(\zeta_p^2)=\bar Q_{n/2}(\zeta_p^2)=0$. For $p=2$, $\zeta_2=-1$ and $\zeta_2^2=1$, giving $R_n(-1)=-n\bar Q^{\prim}_{n/2}(1)$.
+\end{proof}
+
+\begin{remark}
+$\bar Q^{\prim}_{n/2}(1)=\#\big(U^{\prim}_{n/2}/C_{n/2}\big)=\frac{2}{n}\sum_{d\mid n/2}\mu\big(\tfrac{n}{2d}\big)\binom{md-1}{d-1}$ is explicit; so part (2) is an exact evaluation, not merely an obstruction. Note also that all statements descend to every $\zeta$ of order $p^j\mid n$, $\Phi_{p^j}$ in place of $\Phi_p$, by the same proof.
+\end{remark}
+
+\section{The exact necklace formula}\label{sec:necklace}
+
+We now prove Theorem \ref{thm:master}. Recall $A_n(q)=\sum_{a\in U_n \text{ admissible}}q^{\wt(a)}$ and $A(q,t)=1+\sum_{n\ge1}A_nt^n$. On power series with coefficients in $\ZZ[q^{\pm1}]$ and no constant-term contribution we use the plethystic operations determined by $\psi_r(q^wt^l)=q^{rw}t^{rl}$, with
+\[
+\Exp(F)=\exp\Big(\sum_{r\ge1}\frac{\psi_r(F)}{r}\Big),\qquad
+\PLog=\Exp^{-1},\qquad
+\Exp\big(q^wt^l\big)=\frac1{1-q^wt^l}.
+\]
+
+\begin{definition}
+A \emph{block} is an admissible $c\in U_j$, $j\ge1$, whose partial sums satisfy $S_k(c)<(m-1)k$ for $0<k<j$ (no interior return to the diagonal). Let $\mathfrak B$ denote the set of blocks (of all lengths $j\ge1$), a graded alphabet with finitely many letters in each degree, and give the letter $c$ the monomial weight $u_c=q^{\wt(c)}t^{|c|}$.
+\end{definition}
+
+\begin{lemma}[First-return factorization; additivity]\label{lem:blocks}
+Concatenation gives a bijection between words $c^{(1)}c^{(2)}\cdots c^{(r)}$ in the free monoid $\mathfrak B^*$ and admissible sequences, under which lengths add and weights add: if $u\in U_j$ satisfies $S_j(u)=(m-1)j$ (in particular if $u$ is a block or a concatenation of blocks) and $v\in U_l$, then $\wt_{j+l}(uv)=\wt_j(u)+\wt_l(v)$. Consequently
+\[
+A(q,t)=\frac1{1-B(q,t)},\qquad B(q,t):=\sum_{c\in\mathfrak B}u_c .
+\]
+\end{lemma}
+
+\begin{proof}
+An admissible $a\in U_n$ returns to the diagonal ($S_k=(m-1)k$) at a set of indices $0=k_0<k_1<\dots<k_r=n$; cutting at these indices expresses $a$ uniquely as a concatenation of blocks, and conversely any concatenation of blocks is admissible with returns exactly at the cut points. For additivity, write $n=j+l$:
+\[
+\wt_n(uv)=\sum_{i\le j}(n-i)(m-1-u_i)+\sum_{i'\le l}(l-i')(m-1-v_{i'})
+\]
+where the first sum equals $\sum_{i\le j}(j-i)(m-1-u_i)+(n-j)\sum_{i\le j}(m-1-u_i)=\wt_j(u)+0$ by $\sum_{i\le j}(m-1-u_i)=0$ (which holds as $S_j(u)=(m-1)j$), and the second sum is $\wt_l(v)$ on the nose. The generating identity follows since weights and lengths are additive.
+\end{proof}
+
+\begin{lemma}[Classes vs.\ necklaces]\label{lem:classes}
+Cutting at diagonal returns induces a bijection
+\[
+U^{\prim}_n/C_n\ \longleftrightarrow\ \{\text{aperiodic necklaces over }\mathfrak B\text{ of total length }n\},
+\]
+under which $\wt(C)$ equals the total block weight of the necklace. Moreover the admissible elements in a primitive class $C$ are exactly its block-boundary rotations; there are $r_C$ of them ($r_C$ = number of blocks), all of weight $\wt(C)$.
+\end{lemma}
+
+\begin{proof}
+Let $C$ be a primitive class and $a\in C$ admissible (Section \ref{sec:lemmas}). By Lemma \ref{lem:rot}, a rotation $\rho^ka$ has weight $\wt(a)$ iff $S_k(a)=(m-1)k$, i.e.\ iff $k$ is a return; and being admissible is equivalent to having maximal weight, so the admissible elements of $C$ are exactly the rotations at returns, i.e.\ the block-boundary rotations of the block word of $a$; their number is the number of blocks $r_C$. The block word is determined by $C$ up to cyclic rotation, giving a well-defined necklace; it is aperiodic, since a period of the block word is in particular a period of $a$. Conversely an aperiodic necklace, read as a sequence, is primitive: a sequence-period $d\mid n$, $d<n$, would make $\wt(\rho^d a)=\wt(a)$ maximal, hence $\rho^da$ admissible with the same block structure shifted, exhibiting a period of the necklace. The weight statement is Lemma \ref{lem:blocks}. Both constructions are mutually inverse.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:master}]
+Fix any total order on the countable alphabet $\mathfrak B$. By the Chen--Fox--Lyndon theorem, every word in $\mathfrak B^*$ factors uniquely as a weakly decreasing concatenation of Lyndon words; since length and weight are additive (Lemma \ref{lem:blocks}), this factorization gives an isomorphism of graded monoids between $\mathfrak B^*$ and the free commutative monoid on Lyndon words, whence the generating identity
+\[
+A(q,t)=\frac1{1-B(q,t)}=\prod_{\ell\ \text{Lyndon}}\frac1{1-u_\ell}
+=\Exp\Big(\sum_{\ell\ \text{Lyndon}}u_\ell\Big),
+\]
+using $\Exp(u)=1/(1-u)$ for each monomial $u_\ell$ and multiplicativity of $\Exp$; all products/sums are locally finite since each $t$-degree contains finitely many letters. Lyndon words over $\mathfrak B$ biject with aperiodic necklaces, so by Lemma \ref{lem:classes},
+\[
+\sum_{\ell}u_\ell=\sum_{n\ge1}\Big(\sum_{C\in U^{\prim}_n/C_n}q^{\wt(C)}\Big)t^n=\sum_{n\ge1}\bar Q^{\prim}_n(q)\,t^n .
+\]
+Applying $\PLog$ gives $\bar Q^{\prim}_n=[t^n]\PLog A(q,t)$. Finally, by \cite[Thm.~5.11 and \S6]{Rei1102}, $\bar Q_n=\bar Q^{\prim}_n$ unless $m$ is even and $n\equiv2\pmod4$, in which case $\bar Q_n=\bar Q^{\prim}_n+\sum_{b}q^{\wt_n(bb)}$, the sum over primitive classes of $U_{n/2}$; by Lemma \ref{lem:rep}, $\wt_n(bb)=2\wt_{n/2}(b)$ and (arguing as in Lemma \ref{lem:classes} one level down, or directly since doubling preserves maximality) the class-maximum doubles, so the correction equals $\psi_2(\bar Q^{\prim}_{n/2})$.
+\end{proof}
+
+\begin{remark}
+At $q=1$, $A(1,t)$ is the Fuss--Catalan generating function ($A_n(1)=\frac{1}{(m-1)n+1}\binom{mn}{n}$, the ballot-number count of admissible sequences), and Theorem \ref{thm:master} degenerates to the classical necklace form of \eqref{eq:reineke}. The polynomials $A_n(q)$ are the images of the Poincar\'e polynomials of the noncommutative Hilbert schemes $\mathrm{Hilb}^{(m)}_{n,1}$ of \cite{Rei0306} under $q\mapsto q^{-1}$ up to a monomial (co-area vs.\ area statistic); we do not use this here. We also stress how Theorem \ref{thm:master} differs from Reineke's exact $\Exp$-identity \cite[Thm.~5.11]{Rei1102} combined with his framed factorization \cite[Cor.~2.2(4)]{Rei1102}: those identities are formulated for the area-statistic (Poincar\'e-polynomial) generating series, and the naive area-statistic analogue of Theorem \ref{thm:master} is \emph{false} (we checked that it fails already at $n=3$); it is precisely in the co-area gauge that the plethystic logarithm of the ballot series produces exactly $\bar Q_n$.
+\end{remark}
+
+\begin{proposition}[Algebraicity at roots of unity]\label{prop:algebraic}
+Let $\zeta$ be a root of unity. Then $A(\zeta,t)$ is algebraic over $\QQ(\zeta)(t)$.
+\end{proposition}
+
+\begin{proof}
+Let $F(q,t)=\sum_n F_n(q)t^n$ be the area generating function of admissible sequences, i.e.\ $F_n(q)=\sum_a q^{(m-1)\binom n2-\wt(a)}$ (sum over admissible $a\in U_n$), so that $A_n(q)=q^{(m-1)\binom n2}F_n(q^{-1})$ and $F_n\in\NN[q]$ has degree $\le(m-1)\binom n2$. By Reineke's grafting recursion \cite[Cor.~2.2(1)]{Rei1102} (in the tree model of \cite{Rei0306}, which is equivalent to the ballot model by the standard bijection between $m$-ary trees and admissible lattice words), $F$ satisfies the $q$-difference equation
+\[
+F(q,t)\;=\;1+t\prod_{k=0}^{m-1}F(q,q^kt).
+\]
+Let $p$ be the order of $\zeta$. Specializing $q=\zeta$ and substituting $t\mapsto\zeta^jt$ in the $q$-difference equation, the finitely many series $G_j(t):=F(\zeta,\zeta^jt)$, $j\in\ZZ/p$, satisfy the polynomial system
+\[
+G_j(t)\;=\;1+\zeta^{j}t\prod_{k=0}^{m-1}G_{j+k}(t)\qquad(j\in\ZZ/p)
+\]
+--- a finite system of polynomial equations over $\QQ(\zeta)(t)$ with the formal-power-series solution $(G_j)_j$. The Jacobian of the system $\Psi_j:=G_j-1-\zeta^jt\prod_kG_{j+k}$ with respect to $(G_j)_j$ is the identity matrix modulo $t$, hence invertible along the formal solution; the solution is therefore a smooth isolated point of the fiber of the associated affine variety over the generic point of $\mathrm{Spec}\,\QQ(\zeta)[t]$, so it lies on a zero-dimensional component over $\QQ(\zeta)(t)$ and its coordinates are algebraic over $\QQ(\zeta)(t)$. Hence $F(\zeta,t)=G_0(t)$ is algebraic. Finally, $A(\zeta,t)=\sum_n \zeta^{(m-1)\binom n2}F_n(\zeta^{-1})t^n$: the exponent $(m-1)\binom n2$ is (for fixed $m,p$) a quadratic function of $n$ mod $p$, hence periodic in $n$ of period dividing $2p$; therefore $A(\zeta,t)$ is a finite sum of arithmetic-progression sections of the algebraic series $F(\zeta^{-1},t)$, each twisted by a constant. Sections along arithmetic progressions preserve algebraicity (averaging over the substitutions $t\mapsto\omega t$, $\omega^{2p}=1$), so $A(\zeta,t)$ is algebraic.
+\end{proof}
+
+This explains qualitatively the linear-recursive patterns of Section \ref{sec:pheno}; making the resulting evaluations of $\DT_n(\zeta_p)$ fully explicit is an interesting problem that we leave open.
+
+\section{Proof of the improved integrality theorem}\label{sec:arith}
+
+Throughout this section put, for $e\ge1$,
+\[
+a_e:=(-1)^{(m-1)(e-1)}\binom{me-1}{e-1}\in\ZZ,
+\]
+so that \eqref{eq:reineke} reads
+\begin{equation}\label{eq:reineke2}
+n^2\,\DT_n=(-1)^{(m-1)(n-1)}\sum_{d\mid n}\mu\Big(\frac nd\Big)a_d .
+\end{equation}
+We use throughout the identity
+\begin{equation}\label{eq:mident}
+\binom{me}{e}=m\binom{me-1}{e-1}.
+\end{equation}
+
+\begin{lemma}[Tower congruences]\label{lem:tower}
+Let $p$ be prime, $e\ge1$. Set $\kappa_p=3$ for $p\ge5$, $\kappa_3=2$, $\kappa_2=1$. Then
+\[
+\vp\big(a_{pe}-a_e\big)\ \ge\ \kappa_p+3\vp(e)+\vp\big(m(m-1)\big).
+\]
+\end{lemma}
+
+\begin{proof}
+Apply Theorem \ref{thm:kaz} (for $p\ge3$), resp.\ Proposition \ref{prop:kaz2} (for $p=2$), with $n=me$, $k=e$:
+\[
+\binom{mpe}{pe}\ \equiv\ \varepsilon\binom{me}{e}\ \ \pmod{p^{\kappa_p}\,me\cdot e\cdot(m-1)e\cdot\binom{me}{e}\ZZ_p},
+\]
+where $\varepsilon=1$ for $p$ odd and $\varepsilon=(-1)^{e\cdot(m-1)e}=(-1)^{(m-1)e}$ for $p=2$. The $p$-adic valuation of the modulus is at least
+\[
+\kappa_p+\vp(m)+3\vp(e)+\vp(m-1)+\vp\Big(\binom{me}{e}\Big)
+\ \ge\ \kappa_p+3\vp(e)+\vp(m(m-1))+\vp(m),
+\]
+where we used $\vp\big(\binom{me}{e}\big)\ge\vp(m)$, immediate from \eqref{eq:mident}. Dividing the congruence by $m$ (using \eqref{eq:mident} on both sides) gives
+\[
+\binom{mpe-1}{pe-1}\ \equiv\ \varepsilon\,\binom{me-1}{e-1}\pmod{p^{\kappa_p+3\vp(e)+\vp(m(m-1))}\ZZ_p}.
+\]
+It remains to compare with the signs in $a_e$. For $p$ odd, $(m-1)(pe-1)\equiv(m-1)(e-1)\pmod 2$ since $pe\equiv e$, so $a_{pe}$ and $a_e$ carry the same sign and $\varepsilon=1$: the displayed congruence is exactly the claim. For $p=2$:
+\[
+a_{2e}=(-1)^{(m-1)(2e-1)}\binom{2me-1}{2e-1}=(-1)^{m-1}\binom{2me-1}{2e-1},
+\]
+and the displayed congruence gives $\binom{2me-1}{2e-1}\equiv(-1)^{(m-1)e}\binom{me-1}{e-1}$, so
+\[
+a_{2e}\ \equiv\ (-1)^{(m-1)+(m-1)e+(m-1)(e-1)}\,a_e\ =\ (-1)^{2(m-1)e}a_e=a_e ,
+\]
+modulo the same power of $2$. The signs cancel identically, completing the proof.
+\end{proof}
+
+\begin{remark}
+The exact cancellation of signs at $p=2$ is the arithmetic reflection of the sign twist $(-1)^{(m-1)n}$ in \eqref{eq:proddef}: the motivic sign conventions of DT theory are precisely the ones compatible with the $2$-adic Kazandzidis congruence.
+\end{remark}
+
+\begin{proof}[Proof of Theorem \ref{thm:main}]
+Fix a prime $p$ and $n$ with $v:=\vp(n)\ge1$; write $n=p^vu$, $p\nmid u$. In \eqref{eq:reineke2}, every divisor of $n$ is $d=p^jf$ with $f\mid u$, $0\le j\le v$, and $\mu(n/d)=\mu(p^{v-j})\mu(u/f)$ vanishes unless $j\in\{v,v-1\}$. Hence
+\[
+\sum_{d\mid n}\mu\Big(\frac nd\Big)a_d=\sum_{f\mid u}\mu\Big(\frac uf\Big)\Big(a_{p^vf}-a_{p^{v-1}f}\Big).
+\]
+By Lemma \ref{lem:tower} with $e=p^{v-1}f$,
+\[
+\vp\big(a_{p^vf}-a_{p^{v-1}f}\big)\ \ge\ \kappa_p+3(v-1)+\vp\big(m(m-1)\big),
+\]
+so $\vp(n^2\DT_n)\ge 3v+(\kappa_p-3)+\vp(m(m-1))$ and therefore
+\begin{equation}\label{eq:mainbound}
+\vp(\DT_n)\ \ge\ v+(\kappa_p-3)+\vp\big(m(m-1)\big).
+\end{equation}
+For $p\ge5$, $\kappa_p-3=0$ gives (1). For $p=3$: \eqref{eq:mainbound} reads $v_3(\DT_n)\ge v-1+v_3(m(m-1))$; if $m\equiv0,1\pmod 3$ then $3\mid m(m-1)$ and we get $\ge v$; if $m\equiv2$ we get $\ge v-1$. This is (2). For $p=2$: \eqref{eq:mainbound} reads $v_2(\DT_n)\ge v-2+v_2(m(m-1))$. Exactly one of $m,m-1$ is even and $v_2(m(m-1))$ equals $v_2(m)$ or $v_2(m-1)$; it is $\ge2$ iff $m\equiv0,1\pmod4$, and equals $1$ iff $m\equiv2,3\pmod4$. This is (3).
+
+Optimality: by \eqref{eq:reineke},
+$\DT_2=\lfloor m/2\rfloor$ and $\DT_3=\binom m2$. If $m\equiv2,3\pmod4$ then $\lfloor m/2\rfloor$ is odd, so $v_2(\DT_2)=0=v_2(2)-1$. If $m\equiv2\pmod3$ then $3\nmid m(m-1)$, so $v_3(\DT_3)=0=v_3(3)-1$.
+\end{proof}
+
+\begin{proof}[Proof of Corollary \ref{cor:knots}]
+By \cite[Prop.~1.2]{GKS} (transcribed in the introduction) the extremal BPS invariants of the twist knot $K_p$ are $\pm\DT^{(m)}_r$ for $m\in\{3,\,2|p|+1\}$ ($p\le-1$) and $m\in\{2,\,2p+2\}$ ($p\ge2$). Theorem \ref{thm:main} gives $r\mid\gamma(m)\DT^{(m)}_r$ with the optimal $\gamma(m)$, which is Conjecture \ref{conj:GKS} with $\gamma^\pm=\gamma(m)$. Since $\gamma(m)$ depends only on $m\bmod 12$, the values for the families $m=2|p|+1$, $m=2p+2$ depend only on $p\bmod 6$, giving twelve values in total; we checked that they coincide with all twist-knot entries of \cite[Table~1]{GKS}. For the figure-eight knot ($p=-1$): both rows have $m=3$; $\varepsilon_2(3)=1$, $\varepsilon_3(3)=0$, so $\gamma=2$, in accordance with \cite[Table 2]{GKS} and \cite{BCM}.
+\end{proof}
+
+\begin{corollary}[Supercongruences]\label{cor:tower}
+For all primes $p\ge5$ and all $u,k\ge1$: $a_{p^ku}\equiv a_{p^{k-1}u}\pmod{p^{3k}}$. In the terminology of \cite{AZ,SVW,Muller}, $(a_e)$ (equivalently, the sequence $\binom{me-1}{e-1}$ up to sign) is a $3$-sequence at every $p\ge5$; at $p=3$ and $p=2$ it is a $3$-sequence up to the fixed defects $3^{-1}$, $2^{-2}$ improved by $\vp(m(m-1))$, as quantified in Lemma \ref{lem:tower}.
+\end{corollary}
+
+\begin{proof}
+Lemma \ref{lem:tower} with $e=p^{k-1}u$.
+\end{proof}
+
+\section{Phenomenology modulo $\Phi_p$ and open problems}\label{sec:pheno}
+
+Beyond Theorem \ref{thm:qsuper}, the invariants $\DT_n(q)$ display rich structure at roots of unity. Table \ref{tab:mod5} shows, for $m=2$ and $p=5$, the normalized reductions $V_n:=q^{1-n}\DT_n(q) \bmod \Phi_5(q)$ (as vectors in the basis $1,q,q^2,q^3$), computed exactly from the engine data.
+
+\begin{table}[ht]
+\caption{$V_n=q^{1-n}\DT^{(2)}_n(q)\bmod\Phi_5(q)$, $n\le30$.}\label{tab:mod5}
+\begin{tabular}{llll}
+$n\equiv1$: & $V_1=[1,0,0,0]$, $V_6=[-1,0,0,-1]$, & $V_{11}=V_{16}=V_{21}=0$, & $V_{26}=[-1,0,0,-1]$\\
+$n\equiv2$: & $V_2=[1,0,0,0]$, $V_7=0$, & $V_{12}=[1,0,0,0]$, $V_{17}=[1,0,0,0]$, & $V_{22}=3V_2,\ V_{27}=9V_2$\\
+$n\equiv3$: & $V_3=[0,1,0,0]$, $V_8=0$, & $V_{13}=V_3$, $V_{18}=2V_3$, & $V_{23}=6V_3,\ V_{28}=17V_3$\\
+$n\equiv4$: & $V_4=[0,1,0,1]$, $V_9=0$, & $V_{14}=V_4$, $V_{19}=2V_4$, & $V_{24}=6V_4,\ V_{29}=17V_4$\\
+$n\equiv0$: & $V_5=[-1,1,0,0]$, & $V_{5k}=c_k\cdot[-1,1,0,0]$, & $c_k=1,2,4,12,41,138\ (k\le6)$
+\end{tabular}
+\end{table}
+
+Several features are visible: (i) rows with $n\equiv1\pmod 5$ vanish except exactly when $n\equiv6\pmod{20}$, i.e.\ when $n\equiv2\pmod4$, where by Theorem \ref{thm:qsuper}(2) the doubling classes contribute; (ii) fixed nonzero residues recur with integer multiplier sequences ($1,1,3,9,\dots$ and $1,2,6,17,\dots$); (iii) the diagonal column $n=5k$ carries a single vector $[-1,1,0,0]\propto(q-1)$ with multipliers $1,2,4,12,41,138,\dots$. Identical phenomena occur for other $(m,p)$. In view of Proposition \ref{prop:algebraic} we expect all of this to be governed by the algebraic function $A(\zeta_5,t)$:
+
+\begin{conjecture}\label{conj:mult}
+For each $m$, each prime $p$ and each residue $b$, the sequence of reductions $\big(V_{pk+b}\bmod\Phi_p\big)_{k\ge0}$ lies, from some $k$ on, in a one-dimensional lattice $\ZZ\cdot w_b$, and the resulting integer multiplier sequences are coefficient sequences of algebraic generating functions (explicitly computable from $A(\zeta_p,t)$ via Theorem \ref{thm:master}).
+\end{conjecture}
+
+A second natural problem is the $q$-Jacobsthal layer: Theorem \ref{thm:qsuper} is a $\Phi_p^2$-statement for $R_n$; the numerical Theorem \ref{thm:main} shows that at $q=1$ a third layer appears for $p\ge5$. In analogy with Straub's question \cite[Rem.~6]{Straub} we ask: is there a natural completion of Theorem \ref{thm:deriv} at the level of second derivatives --- equivalently, an exact evaluation of $\sum_{C}\big(\sum_k e_k(C)^2\big)\zeta^{\wt(C)}$, where $e_k(C)$ are the weight-drops along the orbit --- from which the full $p^3$-divisibility of Theorem \ref{thm:main} would follow $q$-analytically? Our data suggest this second-moment generating function is again Gaussian-binomial-like; we have not found its closed form.
+
+\section{Computational verification}\label{sec:verify}
+
+Two independent implementations were written.
+
+\emph{(a) CoHA engine.} A first-principles implementation of the plethystic factorization \eqref{eq:proddef}: the Poincar\'e series of the (shifted) CoHA of $Q_m$ is expanded in exact integer arithmetic (FLINT), the plethystic logarithm is extracted, and $\DT^{(m)}_n(q)$ is read off. Truncation is made provably exact by a gauge trick: the $t^n$-coefficient is stored multiplied by $q^{+(m-1)n^2}$-normalizations under which every algebraic operation (products of graded pieces, Adams operations) moves $q$-support upward only, so a global cap loses nothing below it. The engine reproduces: Efimov's constraints (monicity, degree $(m-1)\binom n2$, divisibility by $q^{n-1}$, nonnegativity) for all computed invariants; the published tables of \cite{Rei1102} and (after the conversion of Convention \ref{conv:DT}) of \cite{KRSS}; and the anchor collapses for $m=0,1$ (a single fermionic, resp.\ bosonic, generator). Ranges: $m=2$, $n\le50$; $m=3$, $n\le36$; $m=4$, $n\le27$; $m=5$, $n\le22$; $m=6$, $n\le14$.
+
+\emph{(b) Word model.} A second, structurally independent implementation: direct enumeration of $U^{\prim,+}_n/C_n$ with the weight statistic, implementing \eqref{eq:DTword} literally ($m=2$, $n\le12$; $m=3$, $n\le9$; $m=4$, $n\le7$; $m=5,6$, $n\le6$; up to $112{,}632$ classes per invariant). It shares no code, no data structures and no algorithmic steps with the engine (a); in particular the engine never enumerates words and the word model never manipulates power series. The two implementations agree on all overlapping $(m,n)$, and the exactness of the division by $[n]_q$ in \eqref{eq:DTword} was confirmed in every case.
+
+\emph{(c) Identity checks.} Theorem \ref{thm:master} was verified as an identity of polynomials for $m=2,3,4$ up to $n=10,8,8$; Proposition \ref{prop:P} for $m\le5$, $n\le9$ by direct enumeration against the Gaussian binomial; Theorem \ref{thm:deriv} in the polynomial form $(q^n-1)\mid(q\hat R_n'-\sigma\hat R_n)$ for $m\le5$, $n\le10$; Lemmas \ref{lem:rot}--\ref{lem:orbit} on $>10^4$ random instances.
+
+\emph{(d) Arithmetic checks.} Theorem \ref{thm:main} was verified from \eqref{eq:reineke} for all $2\le m\le10$, $n\le120$, all $p\le13$ (no failures; defects attained exactly on the predicted residue classes of $m$). Lemma \ref{lem:tower} was verified for $m\le10$, $p\in\{2,3,5,7\}$, $e\le50$ including high prime-power parts. Theorem \ref{thm:kaz} was verified for $2\le n\le40$, $1\le k<n$, $p\in\{3,5,7\}$, and Proposition \ref{prop:kaz2} for $2\le n\le300$, with sharpness of the exponents $3,2,1$; Theorem \ref{thm:qsuper} was additionally verified end-to-end (including prime powers $\Phi_{p^j}$ and the exact $p=2$ defect) for $m\le5$, $n\le18$.
+
+\emph{(e) Lean formalization.} The arithmetic core of the paper has been formalized in Lean 4 over Mathlib (file \texttt{Dtformal.lean}, included with the sources; it compiles with no \texttt{sorry}, and every statement depends only on Lean's three standard axioms). Machine-checked \emph{unconditionally}: the identity $\binom{me}{e}=m\binom{me-1}{e-1}$; the M\"obius collapse of Section \ref{sec:arith} (in the form $S(p^vu)=\sum_{f\mid u}\mu(u/f)\,(a_{p^vf}-a_{p^{v-1}f})$ for $p\nmid u$, where $S(n):=\sum_{d\mid n}\mu(n/d)a_d$); the evaluations $S(2)$, $2S(3)=9m(m-1)$ with the divisibilities $4\mid S(2)$, $9\mid S(3)$ and the sharpness statements $8\nmid S(2)$ for $m\equiv2,3\ (4)$ and $27\nmid S(3)$ for $m\equiv2\ (3)$ (optimality of $\gamma(m)$); and the orbit-sum identity of Lemma \ref{lem:orbit}. Machine-checked \emph{conditionally on Theorem \ref{thm:kaz} and Proposition \ref{prop:kaz2}}, which are stated as explicit hypotheses: the tower congruences of Lemma \ref{lem:tower} --- including the exact $p=2$ sign cancellation --- and the resulting valuation bounds of Theorem \ref{thm:main} in the normalization $n^2\DT_n=\pm S(n)$, together with the derived $p$-adic bound at the DT level. Thus the entire reduction of Theorem \ref{thm:main} to the classical supercongruence inputs is formally verified; formalizing those inputs themselves (the $p$-adic Morita gamma arguments of \cite{RobertZuber} and Appendix \ref{app:p2}) is left as a further project, the main missing Mathlib ingredients being Volkenborn-integral estimates and Strassmann's theorem.
+
+All code (Python; exact arithmetic throughout) is included with the paper.
+
+\appendix
+\section{Tables}\label{app:tables}
+
+\begin{table}[ht]
+\caption{Numerical DT invariants $\DT^{(m)}_n$, $2\le m\le 6$, $n\le 10$ (from \eqref{eq:reineke}; identical values from both refined implementations at $q=1$).}
+\begin{tabular}{c|rrrrrrrrrr}
+$m\backslash n$&1&2&3&4&5&6&7&8&9&10\\\hline
+2& 1 & 1 & 1 & 2 & 5 & 13 & 35 & 100 & 300 & 925\\
+3& 1 & 1 & 3 & 10 & 40 & 171 & 791 & 3828 & 19287 & 100140\\
+4& 1 & 2 & 6 & 28 & 155 & 936 & 6041 & 41080 & 290565 & 2119190\\
+5& 1 & 2 & 10 & 60 & 425 & 3296 & 27447 & 240312 & 2188056 & 20544450\\
+6& 1 & 3 & 15 & 110 & 950 & 9021 & 91763 & 982652 & 10942254 & 125656950
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\caption{The optimal improved-integrality constant $\gamma(m)=2^{\varepsilon_2(m)}3^{\varepsilon_3(m)}$ of Theorem \ref{thm:main}.}
+\begin{tabular}{c|ccccccccccc}
+$m$&2&3&4&5&6&7&8&9&10&11&12\\\hline
+$\gamma(m)$&6&2&1&3&2&2&3&1&2&6&1
+\end{tabular}
+\end{table}
+
+\section{Proof of the signed Kazandzidis congruence at $p=2$}\label{app:p2}
+
+We prove Proposition \ref{prop:kaz2}. Throughout, $N\ge K\ge 1$, $M:=N-K\ge1$, $v:=v_2$, and $\log$ denotes the $2$-adic logarithm, an isometric isomorphism $1+8\ZZ_2\to 8\ZZ_2$ (and defined on $1+4\ZZ_2$ with $v(\log u)=v(u-1)$ for $u\in1+8\ZZ_2$).
+
+\subsection*{Step 1: reduction to odd double factorials}
+Let $G(n):=\prod_{j=1}^n(2j-1)=(2n-1)!!$. From $(2n)!=2^n n!\,G(n)$ we get
+\begin{equation}\label{eq:Qdef}
+Q\;:=\;\binom{2N}{2K}\Big/\binom NK\;=\;\frac{G(N)}{G(K)\,G(M)}\ \in\ \ZZ_2^\times ,
+\end{equation}
+and $\binom{2N}{2K}-(-1)^{KM}\binom NK=\binom NK\big(Q-(-1)^{KM}\big)$. Since $v\binom NK\ge0$, Proposition \ref{prop:kaz2} is equivalent to
+\begin{equation}\label{eq:goal}
+v\big(Q-\varepsilon\big)\ \ge\ 1+v(NKM),\qquad \varepsilon:=(-1)^{KM}.
+\end{equation}
+
+\subsection*{Step 2: the sign}
+Each factor $2j-1$ is $\equiv1\pmod4$ if $j$ is odd and $\equiv3\pmod4$ if $j$ is even; hence
+$G(n)=(-1)^{\lfloor n/2\rfloor}H(n)$ with $H(n):=\prod_{j\le n}\big((-1)^{j+1}(2j-1)\big)\in1+4\ZZ_2$. Moreover
+\[
+\Big\lfloor \frac N2\Big\rfloor-\Big\lfloor \frac K2\Big\rfloor-\Big\lfloor \frac M2\Big\rfloor \equiv KM \pmod 2 ,
+\]
+as one checks in the two cases: if $K,M$ are both odd then $N$ is even and the left side is $\frac N2-\frac{K-1}2-\frac{M-1}2=1$; otherwise, say $K$ even, $\lfloor K/2\rfloor+\lfloor M/2\rfloor=\lfloor N/2\rfloor$. Therefore
+\begin{equation}\label{eq:signsplit}
+Q=\varepsilon\,\frac{H(N)}{H(K)H(M)},\qquad \frac{H(N)}{H(K)H(M)}\in 1+4\ZZ_2 .
+\end{equation}
+In particular $v(Q-\varepsilon)\ge2$ and $v(Q+\varepsilon)=1$, so from $Q^2-1=(Q-\varepsilon)(Q+\varepsilon)$,
+\begin{equation}\label{eq:square}
+v(Q-\varepsilon)\;=\;v\big(Q^2-1\big)-1 .
+\end{equation}
+
+\subsection*{Step 3: an interpolation lemma}
+Note that $Q^2=G(N)^2/(G(K)^2G(M)^2)$ and $(2j-1)^2\in1+8\ZZ_2$, so with
+\[
+g(y)\;:=\;\sum_{j=1}^{y}\log\big((2j-1)^2\big)\qquad(y\in\ZZ_{\ge0})
+\]
+we have, by \eqref{eq:square} and the isometry of $\log$ on $1+8\ZZ_2$,
+\begin{equation}\label{eq:D2}
+v\big(Q^2-1\big)=v(D),\qquad D:=g(N)-g(K)-g(M).
+\end{equation}
+
+\begin{lemma}\label{lem:interp}
+There is a power series $g(y)=\sum_{i\ge1}g_iy^i\in\QQ_2[[y]]$, convergent on $\ZZ_2$, which agrees with the sums above at all $y\in\ZZ_{\ge0}$, and satisfies:
+\begin{enumerate}
+\item $g_i=0$ for all even $i$;
+\item $v(g_i)\ge 2$ for all odd $i\ge3$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+The function $g$ satisfies $g(0)=0$ and the difference equation
+\[
+g(y+1)-g(y)\;=\;h(y):=\log\big((1+2y)^2\big)\;=\;\sum_{r\ge1}h_ry^r,\qquad
+h_r=\frac{2(-1)^{r+1}2^r}{r},
+\]
+where $v(h_r)=r+1-v(r)\to\infty$. Using Faulhaber's formula $\sum_{k=0}^{y-1}k^r=\frac{B_{r+1}(y)-B_{r+1}}{r+1}$ (Bernoulli polynomials, $B_1=-\frac12$) we may define
+\begin{equation}\label{eq:gser}
+g(y)\;:=\;\sum_{r\ge1}\frac{h_r}{r+1}\big(B_{r+1}(y)-B_{r+1}\big)
+\;=\;\sum_{i\ge1}\Big(\sum_{r\ge \max(i-1,1)}\frac{h_r}{r+1}\binom{r+1}{i}B_{r+1-i}\Big)y^i .
+\end{equation}
+Since $v(h_r)\to\infty$ and, by von Staudt--Clausen, $v(B_{2s})\ge-1$ (while $B_1=-\frac12$ and $B_{\mathrm{odd}\ge3}=0$), the double sum converges coefficientwise and uniformly on $\ZZ_2$; termwise summation of the difference equation shows the resulting series interpolates the integer sums.
+
+(1) The interpolated function is odd. First note that the difference equation $g(y+1)-g(y)=h(y)$, verified above at nonnegative integers by construction, holds identically on $\ZZ_2$: the convergent series $g(y+1)-g(y)-h(y)$ vanishes at all $y\in\ZZ_{\ge0}$, hence identically by Strassmann's theorem (a nonzero convergent power series on $\ZZ_2$ has finitely many zeros). Iterating it backwards from $g(0)=0$ gives, for $n\ge1$,
+$g(-n)=-\sum_{j=1}^{n}h(-j)=-\sum_{j=1}^n\log\big((1-2j)^2\big)=-g(n)$. Hence the convergent series $g(y)+g(-y)$ vanishes at every nonnegative integer, so again by Strassmann $g(y)+g(-y)\equiv0$. Thus $g_i=0$ for even $i$.
+
+(2) Fix odd $i\ge3$ and bound each term of the inner sum in \eqref{eq:gser}, using $v(h_r)=r+1-v(r)$:
+\begin{itemize}
+\item $r=i-1$ (so $B_0=1$): the term is $\frac{h_{i-1}}{i}$, of valuation $i-v(i-1)-v(i)=i-v(i-1)\ge2$, since $i$ is odd and $2^{v(i-1)}\le i-1$ forces $v(i-1)\le\log_2(i-1)\le i-2$.
+\item $r=i$ (so $B_1=-\frac12$): valuation $(i+1-v(i))+v\binom{i+1}i-1-v(i+1)=i\ge3$, using $v(i)=0$ and $v\binom{i+1}i=v(i+1)$.
+\item $r>i$ with $B_{r+1-i}\ne0$: then $r+1-i$ is even, so $r$ is even (as $i$ is odd), $r\ge i+1\ge4$, and the valuation is at least $(r+1-v(r))-1-v(r+1)+0= r-v(r)\ge r-\log_2 r\ge2$.
+\end{itemize}
+Hence $v(g_i)\ge 2$ for odd $i\ge3$, proving (2).
+\end{proof}
+
+\subsection*{Step 4: assembly}
+By Lemma \ref{lem:interp} and \eqref{eq:D2}, writing $c_i:=g_i$,
+\[
+D=\sum_{i\ \mathrm{odd}}c_i\big(N^i-K^i-M^i\big)
+=\sum_{i\ \mathrm{odd},\,i\ge3}c_i\big(N^i-K^i-M^i\big),
+\]
+the $i=1$ term vanishing because $N=K+M$. For odd $i\ge3$, the polynomial $(K+M)^i-K^i-M^i\in\ZZ[K,M]$ vanishes on each of the hyperplanes $K=0$, $M=0$, $K+M=0$ (the last because $i$ is odd), hence is divisible by $KM(K+M)$ in $\ZZ[K,M]$; therefore $v(N^i-K^i-M^i)\ge v(NKM)$. Combining with $v(c_i)\ge2$:
+\[
+v(D)\ \ge\ \min_{i\ \mathrm{odd},\, i\ge3}\big(v(c_i)+v(NKM)\big)\ \ge\ 2+v(NKM).
+\]
+By \eqref{eq:square} and \eqref{eq:D2}, $v(Q-\varepsilon)\ge1+v(NKM)$, which is \eqref{eq:goal}. \qed
+
+\begin{remark}
+The bound is sharp: at $(N,K)=(2,1)$ one has $Q=3$, $\varepsilon=-1$ and $v(Q-\varepsilon)=2=1+v(NKM)$. In the proof this traces to the term $r=2$, $i=3$ of \eqref{eq:gser}, whose valuation $2$ is exactly attained ($v(g_3)=2$). We verified Proposition \ref{prop:kaz2} numerically for all $2\le N\le300$, $1\le K<N$ ($44{,}850$ cases): no violations, and the minimum over all cases of $v\big(\binom{2N}{2K}-\varepsilon\binom NK\big)-1-v\big(NKM\binom NK\big)$ equals $0$. The coefficient bounds of Lemma \ref{lem:interp} were checked symbolically for $i\le10$: $v(g_3)=2$, $v(g_5)=3$, $v(g_7)=6$, $v(g_9)=6$, and the even coefficients vanish.
+\end{remark}
+
+\begin{thebibliography}{99}
+
+\bibitem[AZ06]{AZ} G.~Almkvist, W.~Zudilin, \emph{Differential equations, mirror maps and zeta values}, in: Mirror Symmetry V, AMS/IP Stud. Adv. Math. \textbf{38} (2006), 481--515.
+
+\bibitem[An99]{Andrews} G.~E.~Andrews, \emph{$q$-analogs of the binomial coefficient congruences of Babbage, Wolstenholme and Glaisher}, Discrete Math. \textbf{204} (1999), 15--25.
+
+\bibitem[BCM17]{BCM} E.~Basor, B.~Conrey, K.~E.~Morrison, \emph{Knots and ones}, arXiv:1703.00990.
+
+\bibitem[CLPZ23]{CLPZ} Q.~Chen, K.~Liu, P.~Peng, S.~Zhu, \emph{Congruent skein relations for colored HOMFLY-PT invariants}, Comm. Math. Phys. \textbf{400} (2023), 683--729.
+
+\bibitem[Cl95]{Clark} W.~E.~Clark, \emph{$q$-analogue of a binomial coefficient congruence}, Internat. J. Math. Math. Sci. \textbf{18} (1995), 197--200.
+
+\bibitem[Ef12]{Efimov} A.~I.~Efimov, \emph{Cohomological Hall algebra of a symmetric quiver}, Compos. Math. \textbf{148} (2012), 1133--1146. arXiv:1103.2736.
+
+\bibitem[GKS16]{GKS} S.~Garoufalidis, P.~Kucharski, P.~Su\l kowski, \emph{Knots, BPS states, and algebraic curves}, Comm. Math. Phys. \textbf{346} (2016), 75--113. arXiv:1504.06327.
+
+\bibitem[GSWZ24]{GSWZ} S.~Garoufalidis, P.~Scholze, C.~Wheeler, D.~Zagier, \emph{The Habiro ring of a number field}, arXiv:2412.04241.
+
+\bibitem[Go19]{Gorodetsky} O.~Gorodetsky, \emph{$q$-congruences, with applications to supercongruences and the cyclic sieving phenomenon}, Int. J. Number Theory \textbf{15} (2019), 1919--1968. arXiv:1805.01254.
+
+\bibitem[Gos24]{Gossow} F.~Gossow, \emph{Polynomial and combinatorial analogues of Gauss congruence}, arXiv:2410.05678.
+
+\bibitem[Kaz68]{Kaz} G.~S.~Kazandzidis, \emph{Congruences on the binomial coefficients}, Bull. Soc. Math. Gr\`ece (N.S.) \textbf{9} (1968), 1--12; \textbf{10} (1969), 35--40.
+
+\bibitem[KS11]{KS} M.~Kontsevich, Y.~Soibelman, \emph{Cohomological Hall algebra, exponential Hodge structures and motivic Donaldson--Thomas invariants}, Commun. Number Theory Phys. \textbf{5} (2011), 231--352. arXiv:1006.2706.
+
+\bibitem[KSV06]{KSV} M.~Kontsevich, A.~Schwarz, V.~Vologodsky, \emph{Integrality of instanton numbers and $p$-adic B-model}, Phys. Lett. B \textbf{637} (2006), 97--101. hep-th/0603106.
+
+\bibitem[KRSS19]{KRSS} P.~Kucharski, M.~Reineke, M.~Sto\v si\'c, P.~Su\l kowski, \emph{Knots-quivers correspondence}, Adv. Theor. Math. Phys. \textbf{23} (2019), 1849--1902. arXiv:1707.04017.
+
+\bibitem[KS16]{KuchSulk} P.~Kucharski, P.~Su\l kowski, \emph{BPS counting for knots and combinatorics on words}, JHEP \textbf{11} (2016) 120. arXiv:1608.06600.
+
+\bibitem[LZ16]{LuoZhu} W.~Luo, S.~Zhu, \emph{Integrality structures in topological strings I: framed unknot}, arXiv:1611.06506.
+
+\bibitem[MR19]{MR} S.~Meinhardt, M.~Reineke, \emph{Donaldson--Thomas invariants versus intersection cohomology of quiver moduli}, J. reine angew. Math. \textbf{754} (2019), 143--178. arXiv:1411.4062.
+
+\bibitem[Me11]{Mestrovic} R.~Me\v strovi\'c, \emph{Wolstenholme's theorem: its generalizations and extensions in the last hundred and fifty years (1862--2012)}, arXiv:1111.3057.
+
+\bibitem[M\"u21]{Muller} L.~F.~M\"uller, \emph{Wolstenholme type congruences and framing of rational 2-functions}, arXiv:2104.10754.
+
+\bibitem[Pan13]{Pan} H.~Pan, \emph{Factors of some lacunary $q$-binomial sums}, Monatsh. Math. \textbf{172} (2013), 387--398.
+
+\bibitem[PSS18]{PSS} M.~Panfil, M.~Sto\v si\'c, P.~Su\l kowski, \emph{Donaldson--Thomas invariants, torus knots, and lattice paths}, Phys. Rev. D \textbf{98} (2018), 026022. arXiv:1802.04573.
+
+\bibitem[Re05]{Rei0306} M.~Reineke, \emph{Cohomology of non-commutative Hilbert schemes}, Algebr. Represent. Theory \textbf{8} (2005), 541--561. arXiv:math/0306185.
+
+\bibitem[Re11]{Rei0903} M.~Reineke, \emph{Cohomology of quiver moduli, functional equations, and integrality of Donaldson--Thomas type invariants}, Compos. Math. \textbf{147} (2011), 943--964. arXiv:0903.0261.
+
+\bibitem[Re12]{Rei1102} M.~Reineke, \emph{Degenerate cohomological Hall algebra and quantized Donaldson--Thomas invariants for $m$-loop quivers}, Doc. Math. \textbf{17} (2012), 1--22. arXiv:1102.3978.
+
+\bibitem[Re24]{ReiSurvey} M.~Reineke, \emph{Donaldson--Thomas invariants of symmetric quivers}, survey, arXiv:2410.03219.
+
+\bibitem[RZ95]{RobertZuber} A.~Robert, M.~Zuber, \emph{The Kazandzidis supercongruences. A simple proof and an application}, Rend. Sem. Mat. Univ. Padova \textbf{94} (1995), 235--243.
+
+\bibitem[Ro00]{RobertBook} A.~Robert, \emph{A Course in $p$-adic Analysis}, Grad. Texts in Math. \textbf{198}, Springer, 2000.
+
+\bibitem[SVW17]{SVW} A.~Schwarz, V.~Vologodsky, J.~Walcher, \emph{Integrality of framing and geometric origin of 2-functions}, arXiv:1702.07135.
+
+\bibitem[St11]{Straub} A.~Straub, \emph{A $q$-analog of Ljunggren's binomial congruence}, DMTCS Proc. FPSAC 2011, 897--902. arXiv:1103.3258.
+
+\bibitem[St19]{StraubApery} A.~Straub, \emph{Supercongruences for polynomial analogs of the Ap\'ery numbers}, Proc. Amer. Math. Soc. \textbf{147} (2019), 1023--1036. arXiv:1803.07146.
+
+\bibitem[WZ25]{WangZhu} W.~Wang, S.~Zhu, \emph{BPS invariants from framed links}, arXiv:2502.16609.
+
+\bibitem[Zu19]{Zudilin} W.~Zudilin, \emph{Congruences for $q$-binomial coefficients}, Ann. Comb. \textbf{23} (2019), 1123--1135. arXiv:1901.07843.
+
+\end{thebibliography}
+
+\end{document}
